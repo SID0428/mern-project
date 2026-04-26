@@ -1,0 +1,42 @@
+services:
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  backend:
+    build: ./backend
+    ports:
+      - "5001:5001"
+    environment:
+      PORT: 5001
+      MONGODB_URI: mongodb://mongo:27017/course_compass
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: change-this-in-production
+      CLIENT_ORIGIN: http://localhost:9002
+      GEMINI_API_KEY: replace-with-gemini-api-key
+    depends_on:
+      - mongo
+      - redis
+
+  frontend:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:5001/api
+    ports:
+      - "9002:9002"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:5001/api
+    depends_on:
+      - backend
+
+volumes:
+  mongo-data:
